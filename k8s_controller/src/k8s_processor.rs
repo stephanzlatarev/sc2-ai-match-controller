@@ -1,6 +1,6 @@
 use std::{io::BufReader, time::Instant};
 
-use crate::{arenaclient::Arenaclient, k8s_config::K8sConfig};
+use crate::{arenaclient::Arenaclient, k8s_config::K8sConfig, profile::Profile};
 use anyhow::Context;
 use common::api::api_reference::aiarena::aiarena_api_client::AiArenaApiClient;
 use futures_util::future::join;
@@ -16,7 +16,6 @@ use tracing::{debug, error, info, trace};
 
 pub async fn process(settings: K8sConfig) {
     let interval = Duration::from_secs(settings.interval_seconds);
-    let job_yaml = include_str!("../templates/ac-job.yaml");
     let mut arenaclients = match load_arenaclient_details(&settings.arenaclients_json_path) {
         Ok(c) => c,
         Err(e) => {
@@ -63,10 +62,8 @@ pub async fn process(settings: K8sConfig) {
             }
         }
 
-        let mut job_data: Job = serde_yaml::from_str(job_yaml).unwrap();
-
         let res = join(
-            schedule_jobs(&settings, &jobs, &mut job_data, &arenaclients),
+            schedule_jobs(&settings, &jobs, &arenaclients),
             delete_old_jobs(&settings, &jobs, &arenaclients),
         )
         .await;
@@ -84,7 +81,6 @@ pub async fn process(settings: K8sConfig) {
 async fn schedule_jobs(
     settings: &K8sConfig,
     jobs: &Api<Job>,
-    job_data: &mut Job,
     arenaclients: &[Arenaclient],
 ) -> anyhow::Result<()> {
     for ac in arenaclients
@@ -96,6 +92,8 @@ async fn schedule_jobs(
         debug!("Getting new match for AC {:?}", ac.name);
         match api_client.get_match().await {
             Ok(new_match) => {
+                let mut job_data: Job = Profile::get(&new_match).job();
+
                 let new_name = if settings.job_prefix.is_empty() {
                     format!("{}-{}", ac.name.replace('_', "-"), new_match.id)
                 } else {

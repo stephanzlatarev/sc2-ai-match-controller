@@ -92,7 +92,7 @@ async fn schedule_jobs(
         debug!("Getting new match for AC {:?}", ac.name);
         match api_client.get_match().await {
             Ok(new_match) => {
-                let mut job_data: Job = Profile::get(&new_match).job();
+                let mut job_data: Job = Profile::get(&new_match).job_descriptor;
 
                 let new_name = if settings.job_prefix.is_empty() {
                     format!("{}-{}", ac.name.replace('_', "-"), new_match.id)
@@ -105,22 +105,22 @@ async fn schedule_jobs(
                     )
                 };
                 debug!("Setting job name:{:?}", &new_name);
-                set_job_name(job_data, &new_name);
+                set_job_name(&mut job_data, &new_name);
                 debug!("Setting API token");
-                set_api_token(job_data, &ac.token)?;
+                set_api_token(&mut job_data, &ac.token)?;
                 debug!("Setting job labels");
-                set_job_labels(job_data, &ac.name, new_match.id)?;
+                set_job_labels(&mut job_data, &ac.name, new_match.id)?;
                 debug!("Setting configmap name");
                 let new_configmap_name = if settings.job_prefix.is_empty() {
                     "arenaclient-config".to_string()
                 } else {
                     format!("{}-{}", settings.job_prefix, "arenaclient-config")
                 };
-                set_config_configmap_name(job_data, &new_configmap_name)?;
+                set_config_configmap_name(&mut job_data, &new_configmap_name)?;
                 if let Some(version) = &settings.version {
                     debug!("Setting image tags");
                     set_image_tags(
-                        job_data,
+                        &mut job_data,
                         &[
                             "proxy-controller",
                             "bot-controller-1",
@@ -136,7 +136,7 @@ async fn schedule_jobs(
                     new_match.id, &ac.name
                 );
                 debug!("Creating job");
-                jobs.create(&PostParams::default(), job_data).await?;
+                jobs.create(&PostParams::default(), &mut job_data).await?;
                 debug!("Job created");
             }
             Err(e) => {

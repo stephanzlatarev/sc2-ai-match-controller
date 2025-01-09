@@ -1,6 +1,6 @@
 use common::models::aiarena::aiarena_match::AiArenaMatch;
 use k8s_openapi::api::batch::v1::Job;
-use serde::{Deserialize, Serialize};
+use tracing::debug;
 
 // Profiles are used to run matches in a specific Kubernetes configuration that depends on the given match.
 // For example, certain competitions may require less or more time for the match to complete;
@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 // certain matches may be run with a debug profile with verbose logs for the bot author to review.
 
 pub struct Profile {
-    job_descriptor: Job
+    pub job_descriptor: Job
 }
 
 impl Profile {
@@ -38,7 +38,7 @@ fn select_profile(arena_match: &AiArenaMatch) -> &str {
 }
 
 fn load_template(profile_name: &str) -> &str {
-    match profile_name.as_str() {
+    match profile_name {
         "strict" => include_str!("../templates/ac-job-strict.yaml"),
         _ => include_str!("../templates/ac-job.yaml"),
     }

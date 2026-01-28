@@ -1,5 +1,4 @@
-use common::configuration::ac_config::ACConfig;
-use common::models::aiarena::aiarena_match::{Match, MatchPlayer, MatchRequest};
+use common::models::aiarena::aiarena_match::{MatchPlayer, MatchRequest};
 use common::models::aiarena::bot_race::BotRace;
 use common::models::bot_controller::BotType;
 use common::PlayerNum;
@@ -11,7 +10,6 @@ pub struct GameConfig {
     pub max_game_time: u32,
     pub max_frame_time: i32,
     pub timeout_secs: u64,
-    pub strikes: i32,
     pub replay_path: String,
     pub match_id: u32,
     pub replay_name: String,
@@ -23,9 +21,7 @@ pub struct GameConfig {
 }
 
 impl GameConfig {
-    // In this iteration the configuration is read from a file stored with the start request.
-    // In the next iteration, the configuration will be read from the environment variables.
-    pub fn from_file(ac_config: &ACConfig, match_request: &MatchRequest) -> Self {
+    pub fn from_file(match_request: &MatchRequest) -> Self {
         let match_id = match_request.match_id;
         let map_name = match_request.map_name.clone();
         let player_1_name = match_request.player_1_name.clone();
@@ -61,16 +57,15 @@ impl GameConfig {
             map: map_name.to_string(),
             players: players,
 
-            max_game_time: ac_config.max_game_time,
-            max_frame_time: ac_config.max_frame_time,
-            timeout_secs: ac_config.timeout_secs,
-            strikes: ac_config.strikes,
+            max_game_time: 60486,
+            max_frame_time: 40,
+            timeout_secs: 30,
             replay_path: "/root/StarCraftII/maps".to_string(),
             replay_name: replay_name,
-            disable_debug: ac_config.disable_debug,
-            real_time: ac_config.realtime,
-            visualize: ac_config.visualize,
-            validate_race: ac_config.validate_race,
+            disable_debug: true,
+            real_time: false,
+            validate_race: true,
+            visualize: false, // Not used
         }
     }
 

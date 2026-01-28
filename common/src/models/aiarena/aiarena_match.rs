@@ -147,7 +147,7 @@ impl MatchRequest {
         config::Config::builder()
             .add_source(
                 config::File::new(
-                    "/logs/sc2_controller/match-request.toml",
+                    "/match/match-request.toml",
                     config::FileFormat::Toml,
                 )
                 .required(false),
@@ -160,7 +160,6 @@ impl MatchRequest {
     }
 
     pub fn write(&self) -> Result<(), std::io::Error> {
-        let dir_path = "/logs/sc2_controller";
         let toml_str = toml::to_string(self).map_err(|_| {
             std::io::Error::new(
                 std::io::ErrorKind::Other,
@@ -169,8 +168,8 @@ impl MatchRequest {
         })?;
         tracing::debug!("Writing match request to file: {}", toml_str);
 
-        std::fs::create_dir_all(dir_path)?;
-        std::fs::write("/logs/sc2_controller/match-request.toml", toml_str)
+        std::fs::create_dir_all("/match")?;
+        std::fs::write("/match/match-request.toml", toml_str)
     }
 }
 
@@ -187,7 +186,7 @@ pub struct PlayerInfo {
 impl PlayerInfo {
     /// Reads player information for the player with the given client port.
     pub fn read(port: u16) -> Option<Self> {
-        let file_path = format!("/logs/sc2_controller/player-{}.toml", port);
+        let file_path = format!("/match/player-{}.toml", port);
 
         // If file does not exist, return None
         if !std::path::Path::new(&file_path).exists() {
@@ -207,7 +206,7 @@ impl PlayerInfo {
 
     /// Writes player information for the player with the given port.
     pub fn write(&self, port: u16) -> Result<(), std::io::Error> {
-        let dir_path = "/logs/sc2_controller";
+        let dir_path = "/match";
         let toml_str = toml::to_string(self).map_err(|_| {
             std::io::Error::new(
                 std::io::ErrorKind::Other,

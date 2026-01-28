@@ -20,7 +20,7 @@ services:
       match_is_loaded:
         condition: service_healthy
 
-    image: aiarena/arenaclient-sc2:PLACEHOLDER_VERSION
+    image: PLACEHOLDER_GAME_CONTROLLER
     environment:
       - "PLAYER_1_SEAT=10001"
       - "PLAYER_2_SEAT=10002"
@@ -49,7 +49,7 @@ services:
       game_is_ready:
         condition: service_healthy
 
-    image: aiarena/arenaclient-bot:PLACEHOLDER_VERSION
+    image: PLACEHOLDER_BOT1_CONTROLLER
     environment:
       - "BOT_NAME=PLACEHOLDER_BOT1_NAME"
       - "GAME_HOST=game_controller"
@@ -65,7 +65,7 @@ services:
       game_is_ready:
         condition: service_healthy
 
-    image: aiarena/arenaclient-bot:PLACEHOLDER_VERSION
+    image: PLACEHOLDER_BOT2_CONTROLLER
     environment:
       - "BOT_NAME=PLACEHOLDER_BOT2_NAME"
       - "GAME_HOST=game_controller"

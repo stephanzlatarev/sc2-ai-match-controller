@@ -5,6 +5,8 @@ use serde::{Deserialize, Serialize};
 pub struct ControllerConfig {
     pub version: String,
     pub api_url: String,
+    pub game_controller: String,
+    pub bot_controller: String,
     pub gamesets_directory: String,
     pub bots_directory: String,
     pub logs_directory: String,
@@ -27,8 +29,10 @@ pub fn initialize_config() -> ControllerConfig {
 pub struct MatchRequest {
     pub bot1_id: String,
     pub bot1_name: String,
+    pub bot1_base: String,
     pub bot2_id: String,
     pub bot2_name: String,
+    pub bot2_base: String,
 }
 
 impl MatchRequest {
@@ -39,8 +43,18 @@ impl MatchRequest {
         Self {
             bot1_id: parts[0].to_string(),
             bot1_name: parts[1].to_string(),
+            bot1_base: parts[3]
+                .split('@')
+                .nth(1)
+                .unwrap_or("")
+                .to_string(),
             bot2_id: parts[4].to_string(),
             bot2_name: parts[5].to_string(),
+            bot2_base: parts[7]
+                .split('@')
+                .nth(1)
+                .unwrap_or("")
+                .to_string(),
         }
     }
 

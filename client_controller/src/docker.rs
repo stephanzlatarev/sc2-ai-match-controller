@@ -17,17 +17,32 @@ pub fn run_match(run_type: &str, config: &ControllerConfig, request: &MatchReque
         bot2_directory = format!("{}/{}", config.bots_directory, request.bot2_name);
     }
 
+    // Identify the bot controllers
+    let bot1_controller = if request.bot1_base.is_empty() {
+        &config.bot_controller
+    } else {
+        &request.bot1_base
+    };
+    let bot2_controller = if request.bot2_base.is_empty() {
+        &config.bot_controller
+    } else {
+        &request.bot2_base
+    };
+
     // Prepare the template to schedule a match
     let template = include_str!("../templates/docker-compose.yaml");
     let template = template.replace("PLACEHOLDER_RUN_TYPE", run_type);
     let template = template.replace("PLACEHOLDER_VERSION", &config.version);
     let template = template.replace("PLACEHOLDER_API_URL", &config.api_url);
+    let template = template.replace("PLACEHOLDER_GAME_CONTROLLER", &config.game_controller);
     let template = template.replace("PLACEHOLDER_BOTS_DIRECTORY", &config.bots_directory);
     let template = template.replace("PLACEHOLDER_BOT1_ID", &request.bot1_id);
     let template = template.replace("PLACEHOLDER_BOT1_NAME", &request.bot1_name);
+    let template = template.replace("PLACEHOLDER_BOT1_CONTROLLER", bot1_controller);
     let template = template.replace("PLACEHOLDER_BOT1_DIRECTORY", &bot1_directory);
     let template = template.replace("PLACEHOLDER_BOT2_ID", &request.bot2_id);
     let template = template.replace("PLACEHOLDER_BOT2_NAME", &request.bot2_name);
+    let template = template.replace("PLACEHOLDER_BOT2_CONTROLLER", bot2_controller);
     let template = template.replace("PLACEHOLDER_BOT2_DIRECTORY", &bot2_directory);
     let template = template.replace("PLACEHOLDER_GAMESETS_DIRECTORY", &config.gamesets_directory);
     let template = template.replace("PLACEHOLDER_LOGS_DIRECTORY", &config.logs_directory);

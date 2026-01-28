@@ -1,7 +1,6 @@
 use crate::models::aiarena::aiarena_bot::AiArenaBot;
 use crate::models::aiarena::aiarena_map::AiArenaMap;
 use crate::models::aiarena::bot_race::BotRace;
-use crate::models::bot_controller::BotType;
 use crate::PlayerNum;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -20,7 +19,7 @@ pub struct MatchPlayer {
     pub id: String,
     pub name: String,
     pub race: BotRace,
-    pub bot_type: BotType,
+    pub bot_type: String,
 }
 
 impl MatchPlayer {
@@ -30,13 +29,13 @@ impl MatchPlayer {
                 id: ai_match.bot1.game_display_id.clone(),
                 name: ai_match.bot1.name.clone(),
                 race: BotRace::from_str(&ai_match.bot1.plays_race),
-                bot_type: BotType::from_str(&ai_match.bot1._type).unwrap(),
+                bot_type: ai_match.bot1._type.clone(),
             },
             PlayerNum::Two => Self {
                 id: ai_match.bot2.game_display_id.clone(),
                 name: ai_match.bot2.name.clone(),
                 race: BotRace::from_str(&ai_match.bot2.plays_race),
-                bot_type: BotType::from_str(&ai_match.bot2._type).unwrap(),
+                bot_type: ai_match.bot2._type.clone(),
             },
         }
     }
@@ -56,12 +55,10 @@ impl MatchPlayer {
                     .get(2)
                     .ok_or_else(|| SerializationError::ParsingError)?,
             ),
-            bot_type: BotType::from_str(
-                bot_line
-                    .get(3)
-                    .ok_or_else(|| SerializationError::ParsingError)?,
-            )
-            .map_err(|_| SerializationError::ParsingError)?,
+            bot_type: bot_line
+                .get(3)
+                .ok_or_else(|| SerializationError::ParsingError)?
+                .to_string(),
         })
     }
 }

@@ -1,6 +1,5 @@
 use common::models::aiarena::aiarena_match::{MatchPlayer, MatchRequest};
 use common::models::aiarena::bot_race::BotRace;
-use common::models::bot_controller::BotType;
 use common::PlayerNum;
 use std::collections::HashMap;
 
@@ -34,7 +33,7 @@ impl GameConfig {
                     id: player_1_name.to_string(),
                     name: player_1_name.to_string(),
                     race: BotRace::from_str(&match_request.player_1_race.to_string()),
-                    bot_type: BotType::Python, // Bot type is irrelevant for the game controller
+                    bot_type: "linux".to_string(), // Bot type is irrelevant for the game controller
                 },
             ),
             (
@@ -43,7 +42,7 @@ impl GameConfig {
                     id: player_2_name.to_string(),
                     name: player_2_name.to_string(),
                     race: BotRace::from_str(&match_request.player_2_race.to_string()),
-                    bot_type: BotType::Python, // Bot type is irrelevant for the game controller
+                    bot_type: "linux".to_string(), // Bot type is irrelevant for the game controller
                 },
             ),
         ]);

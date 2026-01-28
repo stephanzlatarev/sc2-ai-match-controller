@@ -24,7 +24,7 @@ async fn main() {
                 _ = ws1 => info!("Player seat 1 exited."),
                 _ = ws2 => info!("Player seat 2 exited."),
             }
-        },
+        }
         (Err(e), _) | (_, Err(e)) => {
             panic!("Failed to start SC2: {:?}", e);
         }

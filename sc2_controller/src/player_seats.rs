@@ -1,4 +1,3 @@
-
 #[derive(Clone)]
 pub struct PlayerSeat {
     pub player_num: u8,

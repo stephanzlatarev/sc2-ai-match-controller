@@ -1,6 +1,6 @@
 use crate::player_seats::PlayerSeat;
 use crate::ws_routes::websocket_handler;
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 use axum::routing::get;
 use axum::Router;
 use common::paths;
@@ -17,7 +17,8 @@ pub async fn open_player_seat(player_num: u8) -> Result<JoinHandle<()>> {
 
     let player_seat = PlayerSeat::new(player_num, port);
 
-    start_sc2_process(&player_seat).await
+    start_sc2_process(&player_seat)
+        .await
         .map_err(|e| anyhow!("Failed to start SC2 process: {e}"))?;
 
     let ws_server = start_ws_server(&player_seat)
@@ -28,21 +29,14 @@ pub async fn open_player_seat(player_num: u8) -> Result<JoinHandle<()>> {
 }
 
 async fn start_sc2_process(player_seat: &PlayerSeat) -> Result<()> {
-    let tempdir = TempDir::new()
-        .map_err(|e| anyhow!("Could not create temp dir: {e:?}"))?;
+    let tempdir = TempDir::new().map_err(|e| anyhow!("Could not create temp dir: {e:?}"))?;
 
     // TODO: Move to logging module
-    let stdout_path = format!(
-        "/logs/stdout-{}.log",
-        player_seat.external_port
-    );
+    let stdout_path = format!("/logs/stdout-{}.log", player_seat.external_port);
     let stdout_file = std::fs::File::create(&stdout_path)
         .map_err(|e| anyhow!("Could not create stdout file: {e:?}"))?;
     let stdout = async_process::Stdio::from(stdout_file);
-    let stderr_path = format!(
-        "/logs/stderr-{}.log",
-        player_seat.external_port
-    );
+    let stderr_path = format!("/logs/stderr-{}.log", player_seat.external_port);
     let stderr_file = std::fs::File::create(&stderr_path)
         .map_err(|e| anyhow!("Could not create stderr file: {e:?}"))?;
     let stderr = async_process::Stdio::from(stderr_file);
@@ -85,8 +79,8 @@ async fn start_ws_server(player_seat: &PlayerSeat) -> Result<JoinHandle<()>> {
     let app = Router::new()
         .route("/sc2api", get(websocket_handler))
         .with_state(player_seat.clone());
-    let ws_server = axum::Server::bind(&addr)
-        .serve(app.into_make_service_with_connect_info::<SocketAddr>());
+    let ws_server =
+        axum::Server::bind(&addr).serve(app.into_make_service_with_connect_info::<SocketAddr>());
     let player_seat = player_seat.clone();
 
     let handle = tokio::spawn(async move {

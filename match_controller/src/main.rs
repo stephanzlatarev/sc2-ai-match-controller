@@ -40,7 +40,7 @@ async fn main() {
         RunType::AiArena => Box::new(HttpApiSource::new(settings.clone()).unwrap()),
         RunType::Test => Box::new(TestSource::new(settings.clone())),
     };
-    
+
     let app_state = Arc::new(RwLock::new(ControllerState {
         settings,
         players: Vec::default(),

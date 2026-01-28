@@ -41,13 +41,7 @@ pub async fn match_scheduler<M: MatchSource>(
         &new_match.players[&PlayerNum::Two].name
     );
 
-    if let Err(e) = run_match(
-        &settings,
-        controller_state.clone(),
-        &new_match,
-    )
-    .await
-    {
+    if let Err(e) = run_match(&settings, controller_state.clone(), &new_match).await {
         info!("Match failed: {:?}", e);
         let _ = AiArenaGameResult::new_initialization_error(new_match.match_id).to_json_file();
     }
@@ -222,23 +216,39 @@ async fn build_logs_and_replays_object(
     zip_directory_for_submit("AC", ac_zip_path.to_path_buf(), logs_folder.to_path_buf());
 
     // Zip the logs and data of bot 1
-    zip_directory_for_submit("bot1 logs",
+    zip_directory_for_submit(
+        "bot1 logs",
         bot1_zip_dir.join("logs.zip"),
-        bots_folder.join("bot1").join(bot1_name.clone()).join("logs"),
+        bots_folder
+            .join("bot1")
+            .join(bot1_name.clone())
+            .join("logs"),
     );
-    zip_directory_for_submit("bot1 data",
+    zip_directory_for_submit(
+        "bot1 data",
         bot1_zip_dir.join("data.zip"),
-        bots_folder.join("bot1").join(bot1_name.clone()).join("data"),
+        bots_folder
+            .join("bot1")
+            .join(bot1_name.clone())
+            .join("data"),
     );
 
     // Zip the logs and data of bot 2
-    zip_directory_for_submit("bot2 logs",
+    zip_directory_for_submit(
+        "bot2 logs",
         bot2_zip_dir.join("logs.zip"),
-        bots_folder.join("bot2").join(bot2_name.clone()).join("logs"),
+        bots_folder
+            .join("bot2")
+            .join(bot2_name.clone())
+            .join("logs"),
     );
-    zip_directory_for_submit("bot2 data",
+    zip_directory_for_submit(
+        "bot2 data",
         bot2_zip_dir.join("data.zip"),
-        bots_folder.join("bot2").join(bot2_name.clone()).join("data"),
+        bots_folder
+            .join("bot2")
+            .join(bot2_name.clone())
+            .join("data"),
     );
 
     let replay_file = Path::new(&settings.game_directory).join(format!(

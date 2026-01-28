@@ -24,10 +24,11 @@ pub fn init_logs() -> (
     let controller_logs = create_log_file("sc2_controller.log");
 
     let (non_blocking_stdout, stdout_guard) = tracing_appender::non_blocking(std::io::stdout());
-    let (non_blocking_controller_logs, controller_logs_guard) = tracing_appender::non_blocking(controller_logs);
+    let (non_blocking_controller_logs, controller_logs_guard) =
+        tracing_appender::non_blocking(controller_logs);
 
-    let env_filter = std::env::var("RUST_LOG")
-        .unwrap_or_else(|_| "info,sc2_controller=info".into());
+    let env_filter =
+        std::env::var("RUST_LOG").unwrap_or_else(|_| "info,sc2_controller=info".into());
 
     tracing_subscriber::registry()
         .with(EnvFilter::new(env_filter))

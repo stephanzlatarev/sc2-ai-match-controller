@@ -14,7 +14,8 @@ async fn main() {
     let game_pass = std::env::var("GAME_PASS").unwrap_or_else(|_| game_port.clone());
 
     let bot_name = std::env::var("BOT_NAME").expect("Missing BOT_NAME environment variable");
-    let opponent_id = std::env::var("OPPONENT_ID").expect("Missing OPPONENT_ID environment variable");
+    let opponent_id =
+        std::env::var("OPPONENT_ID").expect("Missing OPPONENT_ID environment variable");
 
     let game_address = format!("{game_host}:{game_port}");
     let server_address = match lookup_host(game_address).await {
@@ -31,10 +32,14 @@ async fn main() {
     let command = command
         .stdout(create_log_file("/bot/logs/stdout.log"))
         .stderr(create_log_file("/bot/logs/stderr.log"))
-        .arg("--GamePort").arg(&game_port)
-        .arg("--LadderServer").arg(server_address)
-        .arg("--StartPort").arg(&game_pass)
-        .arg("--OpponentId").arg(opponent_id)
+        .arg("--GamePort")
+        .arg(&game_port)
+        .arg("--LadderServer")
+        .arg(server_address)
+        .arg("--StartPort")
+        .arg(&game_pass)
+        .arg("--OpponentId")
+        .arg(opponent_id)
         .current_dir("/bot");
 
     info!("Starting bot with command {:?}", &command);
@@ -55,7 +60,8 @@ fn init_controller_logs() -> (
     let controller_logs = create_log_file("/logs/controller.log");
 
     let (non_blocking_stdout, stdout_guard) = tracing_appender::non_blocking(std::io::stdout());
-    let (non_blocking_controller_logs, controller_logs_guard) = tracing_appender::non_blocking(controller_logs);
+    let (non_blocking_controller_logs, controller_logs_guard) =
+        tracing_appender::non_blocking(controller_logs);
 
     tracing_subscriber::registry()
         .with(

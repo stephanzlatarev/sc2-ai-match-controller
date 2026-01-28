@@ -146,11 +146,8 @@ impl MatchRequest {
     pub fn read() -> Self {
         config::Config::builder()
             .add_source(
-                config::File::new(
-                    "/match/match-request.toml",
-                    config::FileFormat::Toml,
-                )
-                .required(false),
+                config::File::new("/match/match-request.toml", config::FileFormat::Toml)
+                    .required(false),
             )
             .add_source(config::Environment::default())
             .build()

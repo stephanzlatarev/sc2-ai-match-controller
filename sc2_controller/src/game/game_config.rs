@@ -34,6 +34,7 @@ impl GameConfig {
                     name: player_1_name.to_string(),
                     race: BotRace::from_str(&match_request.player_1_race.to_string()),
                     bot_type: "linux".to_string(), // Bot type is irrelevant for the game controller
+                    bot_base: "".to_string(),      // Bot base is irrelevant for the game controller
                 },
             ),
             (
@@ -43,6 +44,7 @@ impl GameConfig {
                     name: player_2_name.to_string(),
                     race: BotRace::from_str(&match_request.player_2_race.to_string()),
                     bot_type: "linux".to_string(), // Bot type is irrelevant for the game controller
+                    bot_base: "".to_string(),      // Bot base is irrelevant for the game controller
                 },
             ),
         ]);

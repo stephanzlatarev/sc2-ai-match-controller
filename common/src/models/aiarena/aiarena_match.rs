@@ -4,7 +4,6 @@ use crate::models::aiarena::bot_race::BotRace;
 use crate::PlayerNum;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::str::FromStr;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct AiArenaMatch {
@@ -12,6 +11,8 @@ pub struct AiArenaMatch {
     pub bot1: AiArenaBot,
     pub bot2: AiArenaBot,
     pub map: AiArenaMap,
+    #[serde(default)]
+    pub game_base: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -20,6 +21,7 @@ pub struct MatchPlayer {
     pub name: String,
     pub race: BotRace,
     pub bot_type: String,
+    pub bot_base: String,
 }
 
 impl MatchPlayer {
@@ -30,17 +32,32 @@ impl MatchPlayer {
                 name: ai_match.bot1.name.clone(),
                 race: BotRace::from_str(&ai_match.bot1.plays_race),
                 bot_type: ai_match.bot1._type.clone(),
+                bot_base: ai_match.bot1.bot_base.clone().unwrap_or_default(),
             },
             PlayerNum::Two => Self {
                 id: ai_match.bot2.game_display_id.clone(),
                 name: ai_match.bot2.name.clone(),
                 race: BotRace::from_str(&ai_match.bot2.plays_race),
                 bot_type: ai_match.bot2._type.clone(),
+                bot_base: ai_match.bot2.bot_base.clone().unwrap_or_default(),
             },
         }
     }
 
     pub fn from_file_source(bot_line: &[String]) -> Result<Self, SerializationError> {
+        let raw_bot_type = bot_line
+            .get(3)
+            .ok_or_else(|| SerializationError::ParsingError)?;
+
+        let (bot_type, bot_base) = if raw_bot_type.contains('@') {
+            let mut parts = raw_bot_type.split('@');
+            let bot_type = parts.next().unwrap_or("").to_string();
+            let bot_base = parts.next().unwrap_or("").to_string();
+            (bot_type, bot_base)
+        } else {
+            (raw_bot_type.to_string(), String::new())
+        };
+
         Ok(Self {
             id: bot_line
                 .get(0)
@@ -55,10 +72,8 @@ impl MatchPlayer {
                     .get(2)
                     .ok_or_else(|| SerializationError::ParsingError)?,
             ),
-            bot_type: bot_line
-                .get(3)
-                .ok_or_else(|| SerializationError::ParsingError)?
-                .to_string(),
+            bot_type,
+            bot_base,
         })
     }
 }

@@ -42,15 +42,17 @@ pub fn initialize_config() -> ControllerConfig {
 }
 
 #[derive(Debug, Clone, Default)]
+pub struct Bot {
+    pub id: String,
+    pub name: String,
+    pub runtype: String,
+    pub base: String,
+}
+
+#[derive(Debug, Clone, Default)]
 pub struct MatchRequest {
-    pub bot1_id: String,
-    pub bot1_name: String,
-    pub bot1_type: String,
-    pub bot1_base: String,
-    pub bot2_id: String,
-    pub bot2_name: String,
-    pub bot2_type: String,
-    pub bot2_base: String,
+    pub bot1: Bot,
+    pub bot2: Bot,
 }
 
 impl MatchRequest {
@@ -61,14 +63,18 @@ impl MatchRequest {
         let (bot2_type, bot2_base) = split(parts[7]);
 
         Self {
-            bot1_id: parts[0].to_string(),
-            bot1_name: parts[1].to_string(),
-            bot1_type,
-            bot1_base,
-            bot2_id: parts[4].to_string(),
-            bot2_name: parts[5].to_string(),
-            bot2_type,
-            bot2_base,
+            bot1: Bot {
+                id: parts[0].to_string(),
+                name: parts[1].to_string(),
+                runtype: bot1_type,
+                base: bot1_base,
+            },
+            bot2: Bot {
+                id: parts[4].to_string(),
+                name: parts[5].to_string(),
+                runtype: bot2_type,
+                base: bot2_base,
+            },
         }
     }
 

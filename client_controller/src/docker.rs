@@ -1,4 +1,5 @@
-use crate::config::{ControllerConfig, MatchRequest};
+use crate::config::{Bot, ControllerConfig, MatchRequest};
+use std::env::temp_dir;
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
@@ -6,9 +7,8 @@ use std::process::Command;
 
 pub fn run_match(run_type: &str, config: &ControllerConfig, request: &MatchRequest) {
     let match_directory = format!("{}/match", config.logs_directory);
-    let (bot1_directory, bot2_directory) = select_bot_directories(run_type, config, request);
-    let (bot1_controller, bot2_controller) = select_bot_controllers(config, request);
-    let (bot1_command, bot2_command) = select_bot_commands(config, request);
+    let (bot1_controller, bot1_command, bot1_directory) = select_bot_controller(run_type, config, &request.bot1, &request.bot2, "10001");
+    let (bot2_controller, bot2_command, bot2_directory) = select_bot_controller(run_type, config, &request.bot2, &request.bot1, "10002");
 
     // Prepare the template to schedule a match
     let template = include_str!("../templates/docker-compose.yaml");
@@ -17,13 +17,13 @@ pub fn run_match(run_type: &str, config: &ControllerConfig, request: &MatchReque
     let template = template.replace("PLACEHOLDER_API_URL", &config.api_url);
     let template = template.replace("PLACEHOLDER_GAME_CONTROLLER", &config.game_controller);
     let template = template.replace("PLACEHOLDER_BOTS_DIRECTORY", &config.bots_directory);
-    let template = template.replace("PLACEHOLDER_BOT1_ID", &request.bot1_id);
-    let template = template.replace("PLACEHOLDER_BOT1_NAME", &request.bot1_name);
+    let template = template.replace("PLACEHOLDER_BOT1_ID", &request.bot1.id);
+    let template = template.replace("PLACEHOLDER_BOT1_NAME", &request.bot1.name);
     let template = template.replace("PLACEHOLDER_BOT1_CONTROLLER", &bot1_controller);
     let template = template.replace("PLACEHOLDER_BOT1_COMMAND", &bot1_command);
     let template = template.replace("PLACEHOLDER_BOT1_DIRECTORY", &bot1_directory);
-    let template = template.replace("PLACEHOLDER_BOT2_ID", &request.bot2_id);
-    let template = template.replace("PLACEHOLDER_BOT2_NAME", &request.bot2_name);
+    let template = template.replace("PLACEHOLDER_BOT2_ID", &request.bot2.id);
+    let template = template.replace("PLACEHOLDER_BOT2_NAME", &request.bot2.name);
     let template = template.replace("PLACEHOLDER_BOT2_CONTROLLER", &bot2_controller);
     let template = template.replace("PLACEHOLDER_BOT2_COMMAND", &bot2_command);
     let template = template.replace("PLACEHOLDER_BOT2_DIRECTORY", &bot2_directory);
@@ -138,54 +138,32 @@ pub fn run_match(run_type: &str, config: &ControllerConfig, request: &MatchReque
     }
 }
 
-fn select_bot_directories(run_type: &str, config: &ControllerConfig, request: &MatchRequest) -> (String, String) {
-    let bot1_directory;
-    let bot2_directory;
+fn select_bot_controller(run_type: &str, config: &ControllerConfig, bot: &Bot, opponent: &Bot, game_port: &str) -> (String, String, String) {
+    let (controller, command, directory);
+    let path = format!("{}/{}", config.bots_directory, bot.name);
 
-    if run_type == "aiarena" {
-        // Bots are in separate directories on AI Arena
-        bot1_directory = format!("{}/bot1/{}", config.bots_directory, request.bot1_name);
-        bot2_directory = format!("{}/bot2/{}", config.bots_directory, request.bot2_name);
+    if bot.base.is_empty() {
+        // This bot doesn't use custom docker image. Use the default bot controller
+        controller = config.bot_controller.clone();
+        command = "null".to_string();
+        directory = if run_type == "aiarena" {
+            format!("{}/bot1/{}", config.bots_directory, bot.name)
+        } else {
+            format!("{}/{}", config.bots_directory, bot.name)
+        }
+    } else if Path::new(&path).exists() {
+        // This bot uses custom docker image and its code is not included in the image
+        controller = bot.base.clone();
+        command = construct_bot_command(&bot.runtype, &bot.name, &game_port, &opponent.id);
+        directory = temp_dir().to_string_lossy().to_string();
     } else {
-        bot1_directory = format!("{}/{}", config.bots_directory, request.bot1_name);
-        bot2_directory = format!("{}/{}", config.bots_directory, request.bot2_name);
+        // This bot uses custom docker image and its code is included in the image
+        controller = bot.base.clone();
+        command = "null".to_string();
+        directory = temp_dir().to_string_lossy().to_string().replace('\\', "/");
     }
 
-    (bot1_directory, bot2_directory)
-}
-
-fn select_bot_controllers(config: &ControllerConfig, request: &MatchRequest) -> (String, String) {
-    let bot1_controller = if request.bot1_base.is_empty() {
-        config.bot_controller.clone()
-    } else {
-        request.bot1_base.clone()
-    };
-
-    let bot2_controller = if request.bot2_base.is_empty() {
-        config.bot_controller.clone()
-    } else {
-        request.bot2_base.clone()
-    };
-
-    (bot1_controller, bot2_controller)
-}
-
-fn select_bot_commands(config: &ControllerConfig, request: &MatchRequest) -> (String, String) {
-    let bot1_path = format!("{}/{}", config.bots_directory, request.bot1_name);
-    let bot1_command = if !request.bot1_base.is_empty() && Path::new(&bot1_path).exists() {
-        construct_bot_command(&request.bot1_type, &request.bot1_name, "10001", &request.bot2_id)
-    } else {
-        "null".to_string()
-    };
-
-    let bot2_path = format!("{}/{}", config.bots_directory, request.bot2_name);
-    let bot2_command = if !request.bot2_base.is_empty() && Path::new(&bot2_path).exists() {
-        construct_bot_command(&request.bot2_type, &request.bot2_name, "10002", &request.bot1_id)
-    } else {
-        "null".to_string()
-    };
-
-    (bot1_command, bot2_command)
+    (controller, command, directory)
 }
 
 fn construct_bot_command(bot_type: &String, bot_name: &String, game_port: &str, opponent_id: &String) -> String {

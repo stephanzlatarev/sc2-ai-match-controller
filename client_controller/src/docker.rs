@@ -155,7 +155,7 @@ fn select_bot_controller(run_type: &str, config: &ControllerConfig, bot: &Bot, o
         // This bot uses custom docker image and its code is not included in the image
         controller = bot.base.clone();
         command = construct_bot_command(&bot.runtype, &bot.name, &game_port, &opponent.id);
-        directory = temp_dir().to_string_lossy().to_string();
+        directory = format!("{}/{}", config.bots_directory, bot.name);
     } else {
         // This bot uses custom docker image and its code is included in the image
         controller = bot.base.clone();

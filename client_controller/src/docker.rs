@@ -180,7 +180,7 @@ fn construct_bot_command(bot_type: &String, bot_name: &String, game_port: &str, 
 
     format!(
         "sh -c \"mkdir -p /bot/logs && cd /bot/ && {command} \
-         --GamePort {game_port} --LadderServer 172.18.0.4 \
+         --GamePort {game_port} --LadderServer 127.0.0.1 \
          --StartPort {game_port} --OpponentId {opponent_id} \
          > /bot/logs/stdout.log 2> /bot/logs/stderr.log\""
     )

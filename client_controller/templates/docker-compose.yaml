@@ -48,12 +48,13 @@ services:
     depends_on:
       game_is_ready:
         condition: service_healthy
+    network_mode: "service:game_controller"
 
     image: PLACEHOLDER_BOT1_CONTROLLER
     command: PLACEHOLDER_BOT1_COMMAND
     environment:
       - "BOT_NAME=PLACEHOLDER_BOT1_NAME"
-      - "GAME_HOST=game_controller"
+      - "GAME_HOST=127.0.0.1"
       - "GAME_PORT=10001"
       - "OPPONENT_ID=PLACEHOLDER_BOT2_ID"
     volumes:
@@ -65,12 +66,13 @@ services:
     depends_on:
       game_is_ready:
         condition: service_healthy
+    network_mode: "service:game_controller"
 
     image: PLACEHOLDER_BOT2_CONTROLLER
     command: PLACEHOLDER_BOT2_COMMAND
     environment:
       - "BOT_NAME=PLACEHOLDER_BOT2_NAME"
-      - "GAME_HOST=game_controller"
+      - "GAME_HOST=127.0.0.1"
       - "GAME_PORT=10002"
       - "OPPONENT_ID=PLACEHOLDER_BOT1_ID"
     volumes:
@@ -80,10 +82,6 @@ services:
   match_controller:
     image: aiarena/arenaclient-match:PLACEHOLDER_VERSION
     environment:
-      - "ACMATCH_PORT=8080"
-      - "ACMATCH_BOT_CONT_1_HOST=bot_controller1"
-      - "ACMATCH_BOT_CONT_2_HOST=bot_controller2"
-      - "ACMATCH_SC2_CONT_HOST=game_controller"
       - "ACMATCH_RUN_TYPE=PLACEHOLDER_RUN_TYPE"
       - "ACMATCH_MATCHES_FILE=/match/match-request.csv"
       - "ACMATCH_RESULTS_FILE=/match/results.json"

@@ -1,26 +1,26 @@
-# AI Arena client
+# AI Arena Client
 
 This client runs bot matches for [AI Arena](https://aiarena.net/).
-It started with StarCraft II (SC2) and evolved to support any other 1v1 game.
+It started with StarCraft II (SC2) and has evolved to support other 1v1 games.
 
 ## Environment
 
-The client can run in either Kubernetes or Docker environment.
+The client runs in Kubernetes or Docker environments.
 
 ### Kubernetes environment
 
-The client is deployed in Kubernetes using the deployment descriptors in branch [`kubernetes`](https://github.com/aiarena/sc2-ai-match-controller/tree/kubernetes).
-The descriptors are produced by their source under [/kubernetes](./kubernetes/).
-The deployment is performed with GitHub Action [Release](/actions/workflows/release.yml).
+The client is deployed to Kubernetes using the deployment descriptors in branch [`kubernetes`](https://github.com/aiarena/sc2-ai-match-controller/tree/kubernetes).
+The descriptors are generated from sources under [kubernetes](./kubernetes/).
+Deployment is performed by the GitHub Action [Release](/actions/workflows/release.yml).
 
-Configure it via the environment variables in the deployment descriptor or `config.toml` file as a Kubernetes ConfigMap.
+Configure via environment variables in the deployment descriptor, or via a `config.toml` provided as a Kubernetes ConfigMap.
 
 ### Docker environment
 
-The client is started with this executable (TBD: Release Rust executable and link it).
-It uses Docker Compose to spin up the Docker containers of the game and bots.
+The client is started using the Rust executable (TBD: release and link).
+It uses Docker Compose to start the containers for the game and bots.
 
-Configure it via environment variables or `config.toml` file in the directory of the executable.
+Configure via environment variables or a `config.toml` file located in the executable's directory.
 
 ## Configuration
 
@@ -28,26 +28,26 @@ Configure it via environment variables or `config.toml` file in the directory of
 |-----------|------------|--------|---------|-------------|
 | VERSION | ✔ | ✔ | latest | The desired version of AI Arena client |
 | BOT_CONTROLLER | ✔ | ✔  | aiarena/arenaclient-bot:&lt;VERSION&gt; | The default bot controller Docker image to run matches |
-| GAME_CONTROLLER | ✔ | ✔  | aiarena/arenaclient-sc2:&lt;VERSION&gt; | The default game controller Docekr image to run matches |
+| GAME_CONTROLLER | ✔ | ✔  | aiarena/arenaclient-sc2:&lt;VERSION&gt; | The default game controller Docker image to run matches |
 | API_URL | ✔ | ✔ | https://aiarena.net/api/ | The URL of the AI Arena API server |
-| API_CLIENT | ✔ | ✔ | - |
-| API_TOKEN | ✔ | ✔ | - |
+| API_CLIENT | ✔ | ✔ | - | API client identifier |
+| API_TOKEN | ✔ | ✔ | - | API access token |
 | MATCHES_LIST | ✘ | ✔ | - | A file containing the list of matches to run |
-| BOTS_DIRECTORY | ✘ | ✔ | ./bots | The directory containing the code and data of bots |
-| GAMESETS_DIRECTORY | ✘ | ✔  | ./gamesets | The directory containing the gamesets (e.g. SC2 maps) |
-| LOGS_DIRECTORY | ✘ | ✔  | ./logs | The directory where the client will write its logs |
+| BOTS_DIRECTORY | ✘ | ✔ | ./bots | The directory containing bot code and data |
+| GAMESETS_DIRECTORY | ✘ | ✔  | ./gamesets | The directory containing gamesets (e.g., SC2 maps) |
+| LOGS_DIRECTORY | ✘ | ✔  | ./logs | The directory where the client writes logs |
 
 ## Matches
 
-The client runs bot matches by connecting two **Bot controller**s to one **Game controller**.
-Matches are scheduled using a local file or **AI Arena API**.
+The client runs bot matches by connecting two bot controllers to one game controller.
+Matches are scheduled using a local file or AI Arena API.
 When scheduled using a local file, the client checks the matches against their expected outcome.
 
 ![Overview](./protocols.png)
 
 ### Match schedule using local file
 
-When parameter **MATCHES_LIST** points to a file with list of matches, the client will use it as the schedule.
+When parameter **MATCHES_LIST** points to a file with a list of matches, the client will use it as the schedule.
 
 The file should list a match per line in the following format:
 ```
@@ -57,7 +57,7 @@ The file should list a match per line in the following format:
 
 Empty lines and lines starting with `#` are ignored.
 
-Here is an example of matches list file:
+Here is an example matches list file:
 ```
 1,basic_bot,T,python,2,js_bot,T,nodejs,AutomatonLE,Player1Win
 
@@ -75,59 +75,59 @@ When no match schedule file is given, and **API_URL**, **API_CLIENT**, **API_TOK
 > [!NOTE]  
 > When using https://aiarena.net/api/ as **API_URL**, the client must be registered with AI Arena.
 
-When the client has capacity to run a match it will issue a POST request identifying itself as a client.
+When the client has capacity to run a match, it issues a POST request identifying itself as a client.
 
-```
+```http
 POST /api/arenaclient/v4/request-match/
 Authorization: Token ...
 ```
 
-When the website has a match for this client, it will assign the match to this client and respond with the information on game, gameset, and player bots:
-```json
+When the website has a match for this client, it assigns the match and responds with information about the game, gameset, and player bots:
+```jsonc
 {
-  match: 101,       // Match identifier on AI Arena
-  competition: 201, // Competition identifier on AI Arena. Used for analytics.
-  game: {
-    base: "aiarena/game-sc2:2026.01.22-11.13", // Docker image of game controller
+  "match": 101,       // Match identifier on AI Arena
+  "competition": 201, // Competition identifier on AI Arena. Used for analytics.
+  "game": {
+    "base": "aiarena/game-sc2:2026.01.22-11.13" // Docker image of game controller
   },
-  gameset: {                       // Optional. File or bundle of files for this match
-    id: "UltraloveAIE_v2.SC2Map",  // Identifier of gameset
-    url: "https://...",            // URL to download gameset
-    md5hash: "MXZ...",             // Base64-encoded MD5 hash for caching and integrity checks
+  "gameset": {                       // Optional. File or bundle of files for this match
+    "id": "UltraloveAIE_v2.SC2Map",  // Identifier of gameset
+    "url": "https://...",            // URL to download gameset
+    "md5hash": "MXZ..."              // Base64-encoded MD5 hash for caching and integrity checks
   },
-  players: [
+  "players": [
     {
-      bot_id: 301,                                // Bot identifier on AI Arena
-      name: "SampleBot",                          // Human-readable name of the player
-      display_id: "abc-def",                      // In-game identifier of the player
-      base: "aiarena/game-bot2:2026.01.22-11.13", // Optional. Docker image of bot controller
-      type: "python",
-      race: "Random",
-      code: {                // Optional. Bot code zip file
-        url: "https://...",  // URL to download bot code zip file
-        md5hash: "MXZ...",   // Base64-encoded MD5 hash for caching and integrity checks
+      "bot_id": 301,                                // Bot identifier on AI Arena
+      "name": "SampleBot",                          // Human-readable name of the player
+      "display_id": "abc-def",                      // In-game identifier of the player
+      "base": "aiarena/game-bot2:2026.01.22-11.13", // Optional. Docker image of bot controller
+      "type": "python",
+      "race": "Random",
+      "code": {                // Optional. Bot code zip file
+        "url": "https://...",  // URL to download bot code zip file
+        "md5hash": "MXZ..."    // Base64-encoded MD5 hash for caching and integrity checks
       },
-      data: {                // Optional. Bot data zip file
-        url: "https://...",  // URL to download bot data zip file
-        md5hash: "MXZ...",   // Base64-encoded MD5 hash for caching and integrity checks
+      "data": {                // Optional. Bot data zip file
+        "url": "https://...",  // URL to download bot data zip file
+        "md5hash": "MXZ..."    // Base64-encoded MD5 hash for caching and integrity checks
       }
     },
     {
-      name: "Challenger",
-      bot_id: 302,
-      display_id: "uvw-xyz",
-      base: "node:23-alpine",
-      type: "nodejs",
-      race: "Protoss",
+      "name": "Challenger",
+      "bot_id": 302,
+      "display_id": "uvw-xyz",
+      "base": "node:23-alpine",
+      "type": "nodejs",
+      "race": "Protoss"
     }
   ]
 }
 ```
 
-When the website fails to assign a match to this client, it will respond with error message:
+When the website fails to assign a match to this client, it responds with an error message:
 ```json
 {
-  error: "No match available at the moment"
+  "error": "No match available at the moment"
 }
 ```
 
@@ -160,13 +160,13 @@ The game controller is started with the following parameters:
 | PLAYER_2_NAME | - | Name of player 2 |
 | PLAYER_2_RACE | - | Race of player 2 |
 
-It must listen on the 2 given TCP ports for connections by the player bots.
+It must listen on the two given TCP ports for connections from the player bots.
 
 It should read the identified gameset from a folder mounted as `/gameset/`.
 The gameset is a file or a directory with files for playing the game.
 
-It should detect the end of the game and produce file `/match/match-result.json` with the following format:
-```json
+It should detect the end of the game and produce the file `/match/match-result.json` with the following format:
+```jsonc
 {
   "match": 101,               // Match identifier
   "result": "Player1Win",     // One of "Player1Win", "Player2Win", "Tie", "None"
@@ -174,15 +174,14 @@ It should detect the end of the game and produce file `/match/match-result.json`
   "players": [
     {
       "bot_id": 301,          // Bot id of player 1
-      "tags: [
-        ...
+      "tags": [               // Tags of player 1
       ],
-      "status": "OK",         // One of "OK", "Error", "Timeout",
-      "avg_step_time": 12.56, // Average step time of player 1
-    },
-    ...
+      "status": "OK",         // One of "OK", "Error", "Timeout"
+      "avg_step_time": 12.56  // Average step time of player 1
+    }
+    // Player 2
   ],
-  "game_steps": 2901,         // Game steps of the match
+  "game_steps": 2901          // Game steps of the match
 }
 ```
 
@@ -204,7 +203,7 @@ The bot controller is started with the following parameters:
 | OPPONENT_ID | - | The id of the opponent player |
 | OPPONENT_NAME | - | The name of the opponent player |
 
-If the bot has code and data, the controller will receive them under `/bot/` and `/bot/data` respectively.
+If the bot has code and data, the controller will receive them under `/bot/` and `/bot/data`, respectively.
 
 The bot controller should start the given bot and connect it to the game at the given address.
 Pass code handling is game-specific and may be required to connect to the game.
@@ -237,7 +236,7 @@ If the match was not assigned to any client, it remains assigned to no client.
 
 #### Match controller downloads match assets
 
-Upon receiving match details, the match controller will download the included gamesets and bots' code and data using the URL-s received in the match details:
+Upon receiving match details, the match controller will download the included gamesets and bots' code and data using the URLs received in the match details:
 
 ```
 GET /api/arenaclient/v4/bot/<bot_id>/code/
@@ -247,13 +246,13 @@ GET /api/arenaclient/v4/bot/<bot_id>/data/
 GET /api/arenaclient/v4/gameset/<gameset_id>/
 ```
 
-Failure to download any asset results in submission of initialization error result.
+Failure to download any asset results in submission of an initialization error result.
 
 #### Match controller submits results
 
-Once the match is complete, the match controller sends a multi-part POST request to AI Arena containing the match result, replay file, client logs including all controller logs, bot logs, and updated bots data.
+Once the match is complete, the match controller sends a multi-part POST request to AI Arena containing the match result, a replay file, client logs including all controller logs, bot logs, and updated bot data.
 
-```
+```http
 POST /api/arenaclient/v4/submit-result/
 Content-Type: multipart/form-data
 Authorization: Token ...
@@ -265,15 +264,15 @@ Authorization: Token ...
   "players": [
     {
       "bot_id": 301,          // Bot id of player 1
-      "tags: [
-        ...
+      "tags": [
+        // Arbitrary tags
       ],
-      "status": "OK",         // One of "OK", "Error", "Timeout",
-      "avg_step_time": 12.56, // Average step time of player 1
-    },
-    ...
+      "status": "OK",         // One of "OK", "Error", "Timeout"
+      "avg_step_time": 12.56   // Average step time of player 1
+    }
+    // Additional players
   ],
-  "game_steps": 2901,         // Game steps of the match
+  "game_steps": 2901          // Game steps of the match
 }
 -----------------------------
 Content-Disposition: form-data; name="replay_file"

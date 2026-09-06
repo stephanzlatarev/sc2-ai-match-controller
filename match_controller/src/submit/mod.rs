@@ -4,7 +4,6 @@ mod signals;
 mod store;
 mod upload_url;
 
-use base64::{engine::general_purpose::STANDARD, Engine};
 use std::path::Path;
 use std::time::Duration;
 use tokio::time::sleep;
@@ -23,7 +22,7 @@ pub async fn submit_result(settings: &Settings) {
         }
     };
 
-    info!("Match {} - {} vs {} on {} - collecting results...", &match_request.match_id, &match_request.player_1_name, &match_request.player_2_name, &match_request.map_name);
+    info!("Match {} - {} vs {} on {} - collecting results...", match_request.match_id, &match_request.player_1_name, &match_request.player_2_name, &match_request.map_name);
     let match_result = wait_for_match_result(settings, &match_request).await;
 
     if settings.should_use_arena_api() {
@@ -49,7 +48,7 @@ async fn wait_for_match_result(settings: &Settings, match_request: &MatchRequest
             sleep(Duration::from_secs(3)).await;
         }
     } else {
-        let result = MatchResult::new_initialization_error(match_request.match_id);
+        let result = MatchResult::new_initialization_error(match_request);
         if let Err(e) = result.write_to_file() {
             error!("Failed to write initialization error result: {:?}", e);
         }
@@ -113,7 +112,7 @@ pub async fn upload_assets(match_request: &MatchRequest, match_result: &MatchRes
     };
 
     let input = result::SubmitResultInput {
-        match_id: STANDARD.encode(format!("MatchType:{}", match_result.match_id)),
+        match_id: settings.match_graph_id.clone(),
         result_type: match_result.result.to_string(),
         game_steps: match_result.game_steps,
         bot1_avg_step_time: match_result.bot1_avg_step_time.unwrap_or(0.0),

@@ -58,6 +58,8 @@ pub struct Bot {
 
 #[derive(Debug, Clone, Default)]
 pub struct MatchRequest {
+    pub match_display_id: u32,
+    pub match_graph_id: String,
     pub bot1: Bot,
     pub bot2: Bot,
     pub expected_result: Option<String>,
@@ -71,6 +73,8 @@ impl MatchRequest {
         let (bot2_type, bot2_base) = split(parts[7]);
 
         Self {
+            match_display_id: 0,
+            match_graph_id: String::new(),
             bot1: Bot {
                 id: parts[0].to_string(),
                 name: parts[1].to_string(),
@@ -85,6 +89,11 @@ impl MatchRequest {
             },
             expected_result: parts.get(9).filter(|s| !s.is_empty()).map(|s| s.to_string()),
         }
+    }
+
+    pub fn set_ids(&mut self, match_display_id: u32, match_graph_id: String) {
+        self.match_display_id = match_display_id;
+        self.match_graph_id = match_graph_id;
     }
 
 }

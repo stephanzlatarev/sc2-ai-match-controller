@@ -4,6 +4,8 @@ services:
     image: aiarena/arenaclient-match:PLACEHOLDER_VERSION
     environment:
       - "ACMATCH_RUN_TYPE=prepare"
+      - "ACMATCH_MATCH_DISPLAY_ID=PLACEHOLDER_MATCH_DISPLAY_ID"
+      - "ACMATCH_MATCH_GRAPH_ID=PLACEHOLDER_MATCH_GRAPH_ID"
       - "ACMATCH_MATCHES_FILE=/match/match-request.csv"
       - "ACMATCH_RESULTS_FILE=/match/results.json"
       - "ACMATCH_BASE_WEBSITE_URL=PLACEHOLDER_API_URL"
@@ -97,6 +99,8 @@ services:
     image: aiarena/arenaclient-match:PLACEHOLDER_VERSION
     environment:
       - "ACMATCH_RUN_TYPE=submit"
+      - "ACMATCH_MATCH_DISPLAY_ID=PLACEHOLDER_MATCH_DISPLAY_ID"
+      - "ACMATCH_MATCH_GRAPH_ID=PLACEHOLDER_MATCH_GRAPH_ID"
       - "ACMATCH_MATCHES_FILE=/match/match-request.csv"
       - "ACMATCH_RESULTS_FILE=/match/results.json"
       - "ACMATCH_BASE_WEBSITE_URL=PLACEHOLDER_API_URL"

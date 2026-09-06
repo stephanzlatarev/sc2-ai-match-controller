@@ -20,13 +20,13 @@ pub async fn prepare_match(settings: &Settings) {
         if let Err(e) = download_assets(settings, &match_request, &download_links).await {
             info!("Match could not be prepared: {:?}", e);
             let _ = match_request.write_to_file();
-            let _ = MatchResult::new_initialization_error(match_request.match_id).write_to_file();
+            let _ = MatchResult::new_initialization_error(&match_request).write_to_file();
             return;
         }
         match_request
     } else {
-        info!("Reading match from file");
-        MatchRequest::read_from_line(&settings.matches_file).expect("Failed to read match from file")
+        info!("Reading match from settings");
+        MatchRequest::read_from_settings(settings).expect("Failed to read match from settings")
     };
 
     if let Err(e) = match_request.write_to_file() {

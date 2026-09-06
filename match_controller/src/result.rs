@@ -7,6 +7,8 @@ use std::io::BufReader;
 use std::path::Path;
 use tracing::info;
 
+use crate::request::MatchRequest;
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct MatchResult {
     #[serde(rename = "match")]
@@ -25,9 +27,9 @@ pub struct MatchResult {
 }
 
 impl MatchResult {
-    pub fn new_initialization_error(match_id: u32) -> Self {
+    pub fn new_initialization_error(match_request: &MatchRequest) -> Self {
         MatchResult {
-            match_id,
+            match_id: match_request.match_id,
             bot1_avg_step_time: None,
             bot1_tags: None,
             bot2_avg_step_time: None,

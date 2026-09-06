@@ -78,9 +78,9 @@ async fn retrieve_match(settings: &K8sConfig, ac: &Arenaclient) -> anyhow::Resul
 
     let template = Profile::get(&new_match).template;
     let job_name = if settings.job_prefix.is_empty() {
-        format!("{}-{}", ac.name.replace('_', "-"), new_match.id)
+        format!("{}-{}", ac.name.replace('_', "-"), new_match.database_id)
     } else {
-        format!("{}-{}-{}", settings.job_prefix, ac.name.replace('_', "-"), new_match.id)
+        format!("{}-{}-{}", settings.job_prefix, ac.name.replace('_', "-"), new_match.database_id)
     };
 
     let configmap_name = if settings.job_prefix.is_empty() {
@@ -92,7 +92,8 @@ async fn retrieve_match(settings: &K8sConfig, ac: &Arenaclient) -> anyhow::Resul
     let values = JobTemplateValues {
         job_name: job_name.clone(),
         configmap_name,
-        match_id: new_match.id.to_string(),
+        match_display_id: new_match.database_id.to_string(),
+        match_graph_id: new_match.id.clone(),
         api_client: ac.name.clone(),
         api_token: ac.token.clone(),
         match_controller_image: format!("aiarena/arenaclient-match:{}", settings.version),

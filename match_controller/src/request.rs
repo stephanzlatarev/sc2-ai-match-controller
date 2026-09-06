@@ -1,4 +1,5 @@
 use crate::race::BotRace;
+use crate::settings::Settings;
 use anyhow::bail;
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
@@ -16,9 +17,9 @@ pub struct MatchRequest {
 }
 
 impl MatchRequest {
-    pub fn read_from_line(path: &str) -> anyhow::Result<Self> {
-        let content = std::fs::read_to_string(path).with_context(|| format!("Failed to read matches file: {}", path))?;
-        parse_match_line(content.trim())
+    pub fn read_from_settings(settings: &Settings) -> anyhow::Result<Self> {
+        let content = std::fs::read_to_string(&settings.matches_file).with_context(|| format!("Failed to read matches file: {}", settings.matches_file))?;
+        parse_match_line(content.trim(), settings.match_display_id)
     }
 
     pub fn read_from_file() -> anyhow::Result<Self> {
@@ -48,7 +49,7 @@ impl MatchRequest {
     }
 }
 
-fn parse_match_line(line: &str) -> anyhow::Result<MatchRequest> {
+fn parse_match_line(line: &str, match_id: u32) -> anyhow::Result<MatchRequest> {
     let vec_line: Vec<String> = line.split(',').map(std::string::ToString::to_string).collect();
 
     if vec_line.len() < 9 || vec_line.len() > 10 {
@@ -56,7 +57,7 @@ fn parse_match_line(line: &str) -> anyhow::Result<MatchRequest> {
     }
 
     Ok(MatchRequest {
-        match_id: 0,
+        match_id,
         map_name: format!("{}.SC2Map", vec_line[8]),
         player_1_id: vec_line[0].clone(),
         player_1_name: vec_line[1].clone(),
@@ -73,7 +74,7 @@ mod tests {
 
     #[test]
     pub fn test_match_extracts_valid() {
-        let m = parse_match_line("bot-id-1,basic_bot,T,python,bot-id-2,loser_bot,P,python,AutomatonLE,Player1Win");
+        let m = parse_match_line("bot-id-1,basic_bot,T,python,bot-id-2,loser_bot,P,python,AutomatonLE,Player1Win", 0);
         assert!(m.is_ok());
         let m = m.unwrap();
         assert_eq!(m.player_1_id, "bot-id-1");
@@ -87,7 +88,7 @@ mod tests {
 
     #[test]
     pub fn test_match_extracts_invalid_extra_field() {
-        let m = parse_match_line("AutomatonLE,AutomatonLE,basic_bot,T,python,bot-id-2,loser_bot,P,python,AutomatonLE,AutomatonLE");
+        let m = parse_match_line("AutomatonLE,AutomatonLE,basic_bot,T,python,bot-id-2,loser_bot,P,python,AutomatonLE,AutomatonLE", 0);
         assert!(m.is_err());
     }
 }

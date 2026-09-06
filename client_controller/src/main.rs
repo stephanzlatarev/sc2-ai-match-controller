@@ -16,13 +16,15 @@ fn main() {
         println!("Reading matches from API at: {}", config.api_url);
 
         println!("This version of client controller supports only the test-server-api with a couple of test match");
-        let match_request = MatchRequest::from_csv_line("1,basic_bot,T,python,2,loser_bot,T,python,AutomatonLE,Player1Win");
+        let mut match_request = MatchRequest::from_csv_line("1,basic_bot,T,python,2,loser_bot,T,python,AutomatonLE,Player1Win");
 
         println!("Running match 1 (cold cache - downloads from source)");
+        match_request.set_ids(1, "1".to_string());
         run_match("aiarena", &config, &match_request);
         check_expected_result(&match_request);
 
         println!("Running match 2 (warm cache - downloads from cache server)");
+        match_request.set_ids(2, "2".to_string());
         run_match("aiarena", &config, &match_request);
         check_expected_result(&match_request);
     } else if !config.matches_file.is_empty() {
@@ -40,6 +42,8 @@ fn main() {
             let _ = fs::remove_file(path);
         }
 
+        let mut match_count: u32 = 0;
+
         for line in reader.lines() {
             let line = line.unwrap_or_else(|e| panic!("Could not read line from matches file: {e:?}"));
             let line = line.trim();
@@ -49,7 +53,9 @@ fn main() {
                 continue;
             }
 
-            let match_request = MatchRequest::from_csv_line(&line);
+            match_count += 1;
+            let mut match_request = MatchRequest::from_csv_line(&line);
+            match_request.set_ids(match_count, match_count.to_string());
 
             println!("Running match: {:?}", match_request);
 

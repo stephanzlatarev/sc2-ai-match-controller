@@ -1,5 +1,4 @@
 use anyhow::{anyhow, Context};
-use base64::{engine::general_purpose::STANDARD, Engine};
 use reqwest::Client;
 use serde::Deserialize;
 
@@ -24,6 +23,7 @@ struct GetNextMatch {
 #[serde(rename_all = "camelCase")]
 pub struct MatchInfo {
     pub id: String,
+    pub database_id: u32,
     pub participant1: Participant,
     pub participant2: Participant,
 }
@@ -40,6 +40,7 @@ mutation {
   getNextMatch {
     match {
       id
+      databaseId
       participant1 {
         name
         gameDisplayId
@@ -75,22 +76,11 @@ pub async fn get_next_match(website_url: &str, token: &str) -> anyhow::Result<Ma
 
     let parsed: GraphQLResponse = serde_json::from_str(&text).context("Failed to parse GraphQL response")?;
 
-    let mut match_info = parsed
+    parsed
         .data
         .ok_or_else(|| anyhow!("GraphQL response has no data"))?
         .get_next_match
         .ok_or_else(|| anyhow!("GraphQL response has no getNextMatch"))?
         .match_info
-        .ok_or_else(|| anyhow!("GraphQL response has no match"))?;
-
-    match_info.id = decode_base64_id(&match_info.id).map(|n| n.to_string()).unwrap_or_else(|| "0".to_string());
-
-    Ok(match_info)
-}
-
-fn decode_base64_id(encoded: &str) -> Option<u32> {
-    let bytes = STANDARD.decode(encoded).ok()?;
-    let decoded = String::from_utf8(bytes).ok()?;
-    let id_str = decoded.rsplit(':').next()?;
-    id_str.parse().ok()
+        .ok_or_else(|| anyhow!("GraphQL response has no match"))
 }

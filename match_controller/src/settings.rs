@@ -12,6 +12,8 @@ pub struct Settings {
     pub keep_alive: bool,
     pub logging_level: String,
     pub log_root: String,
+    pub match_display_id: u32,
+    pub match_graph_id: String,
     pub matches_file: String,
     pub run_type: RunType,
 }

@@ -25,7 +25,7 @@ const ETAG_MAP: &str = "\"test-etag-automaton-map\"";
 
 #[derive(Clone)]
 struct AppState {
-    // Counts how many getNextMatch calls have been made.
+    // Counts how many node match queries have been made.
     // Match 1 (count == 1): cold cache — /download returns 404, source GETs serve full files.
     // Match 2 (count >= 2): warm cache — /download serves files, source GETs return ETag only (no body).
     match_count: Arc<AtomicUsize>,
@@ -49,6 +49,7 @@ struct UploadParams {
 #[derive(Debug, Deserialize)]
 struct GraphQLBody {
     query: String,
+    variables: Option<serde_json::Value>,
 }
 
 #[tokio::main]
@@ -127,10 +128,14 @@ async fn graphql_handler(
         .and_then(|v| v.to_str().ok())
         .unwrap_or("localhost");
     let query = &body.query;
-    if query.contains("getNextMatch") {
+    if query.contains("node") {
+        let match_id = body.variables
+            .as_ref()
+            .and_then(|v| v["id"].as_str())
+            .unwrap_or("TWF0Y2hUeXBlOjE=");
         let count = state.match_count.fetch_add(1, Ordering::SeqCst) + 1;
-        tracing::info!("getNextMatch call #{}", count);
-        graphql_get_next_match(host)
+        tracing::info!("node match query #{} for id {}", count, match_id);
+        graphql_get_match(host, match_id)
     } else if query.contains("requestUploadUrls") {
         graphql_request_upload_urls(host)
     } else if query.contains("submitResult") {
@@ -140,37 +145,40 @@ async fn graphql_handler(
     }
 }
 
-fn graphql_get_next_match(host: &str) -> Response {
+fn graphql_get_match(host: &str, match_id: &str) -> Response {
     let base_url = format!("http://{}", host);
     let json_str = include_str!("../data/match.json");
     let modified = json_str.replace("https://aiarena.net", &base_url);
     let m: serde_json::Value = serde_json::from_str(&modified).unwrap();
 
+    let database_id: serde_json::Value = match_id.parse::<u64>()
+        .map(serde_json::Value::from)
+        .unwrap_or_else(|_| m["id"].clone());
+
     let response = json!({
         "data": {
-            "getNextMatch": {
-                "match": {
-                    "id": "TWF0Y2hUeXBlOjE=",
-                    "map": {
-                        "name": m["map"]["name"],
-                        "downloadLink": m["map"]["download_link"]
-                    },
-                    "participant1": {
-                        "name": m["bot1"]["name"],
-                        "gameDisplayId": m["bot1"]["game_display_id"],
-                        "playsRace": m["bot1"]["plays_race"],
-                        "type": m["bot1"]["type"],
-                        "botZipUrl": m["bot1"]["bot_zip_url"],
-                        "botDataUrl": m["bot1"]["bot_data_url"]
-                    },
-                    "participant2": {
-                        "name": m["bot2"]["name"],
-                        "gameDisplayId": m["bot2"]["game_display_id"],
-                        "playsRace": m["bot2"]["plays_race"],
-                        "type": m["bot2"]["type"],
-                        "botZipUrl": m["bot2"]["bot_zip_url"],
-                        "botDataUrl": m["bot2"]["bot_data_url"]
-                    }
+            "node": {
+                "id": match_id,
+                "databaseId": database_id,
+                "map": {
+                    "name": m["map"]["name"],
+                    "downloadLink": m["map"]["download_link"]
+                },
+                "participant1": {
+                    "name": m["bot1"]["name"],
+                    "gameDisplayId": m["bot1"]["game_display_id"],
+                    "playsRace": m["bot1"]["plays_race"],
+                    "type": m["bot1"]["type"],
+                    "botZipUrl": m["bot1"]["bot_zip_url"],
+                    "botDataUrl": m["bot1"]["bot_data_url"]
+                },
+                "participant2": {
+                    "name": m["bot2"]["name"],
+                    "gameDisplayId": m["bot2"]["game_display_id"],
+                    "playsRace": m["bot2"]["plays_race"],
+                    "type": m["bot2"]["type"],
+                    "botZipUrl": m["bot2"]["bot_zip_url"],
+                    "botDataUrl": m["bot2"]["bot_data_url"]
                 }
             }
         }

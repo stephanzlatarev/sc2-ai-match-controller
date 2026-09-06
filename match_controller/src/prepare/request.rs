@@ -1,5 +1,4 @@
 use anyhow::{anyhow, Context};
-use base64::{engine::general_purpose::STANDARD, Engine};
 use serde::Deserialize;
 
 use crate::graphql::post_graphql;
@@ -14,11 +13,12 @@ pub struct DownloadLinks {
     pub bot2_data: Option<String>,
 }
 
-const GET_NEXT_MATCH_QUERY: &str = r#"
-mutation {
-  getNextMatch {
-    match {
+const MATCH_QUERY: &str = r#"
+query($id: ID!) {
+  node(id: $id) {
+    ... on MatchType {
       id
+      databaseId
       map {
         name
         downloadLink
@@ -43,26 +43,20 @@ mutation {
 "#;
 
 #[derive(Debug, Deserialize)]
-struct GetNextMatchResponse {
-    data: Option<GetNextMatchData>,
+struct MatchResponse {
+    data: Option<MatchData>,
 }
 
 #[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct GetNextMatchData {
-    get_next_match: Option<GetNextMatchWrapper>,
-}
-
-#[derive(Debug, Deserialize)]
-struct GetNextMatchWrapper {
-    #[serde(rename = "match")]
-    match_info: Option<MatchInfo>,
+struct MatchData {
+    node: Option<MatchInfo>,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct MatchInfo {
     id: String,
+    database_id: u32,
     map: MapInfo,
     participant1: ParticipantInfo,
     participant2: ParticipantInfo,
@@ -92,26 +86,25 @@ struct ParticipantInfo {
 }
 
 pub async fn fetch_match_request(settings: &Settings) -> anyhow::Result<(MatchRequest, DownloadLinks)> {
-    let body = serde_json::json!({ "query": GET_NEXT_MATCH_QUERY });
+    let body = serde_json::json!({ "query": MATCH_QUERY, "variables": { "id": settings.match_graph_id } });
     let text = post_graphql(settings, "request", body).await?;
-    let parsed: GetNextMatchResponse = serde_json::from_str(&text).context("Failed to parse getNextMatch response")?;
+    let parsed: MatchResponse = serde_json::from_str(&text).context("Failed to parse node match response")?;
 
     let m = parsed
         .data
-        .ok_or_else(|| anyhow!("getNextMatch response has no data"))?
-        .get_next_match
-        .ok_or_else(|| anyhow!("getNextMatch response has no getNextMatch"))?
-        .match_info
-        .ok_or_else(|| anyhow!("getNextMatch returned no match"))?;
+        .ok_or_else(|| anyhow!("node match response has no data"))?
+        .node
+        .ok_or_else(|| anyhow!("node match response returned no match for id {}", settings.match_graph_id))?;
 
-    let match_id = STANDARD
-        .decode(&m.id)
-        .ok()
-        .and_then(|b| String::from_utf8(b).ok())
-        .and_then(|s| s.rsplit(':').next().and_then(|id| id.parse().ok()))
-        .unwrap_or(0);
+    if m.id != settings.match_graph_id {
+        return Err(anyhow!("match id mismatch: expected {}, got {}", settings.match_graph_id, m.id));
+    }
+    if m.database_id != settings.match_display_id {
+        return Err(anyhow!("match display id mismatch: expected {}, got {}", settings.match_display_id, m.database_id));
+    }
+
     let match_request = MatchRequest {
-        match_id,
+        match_id: m.database_id,
         map_name: format!("{}.SC2Map", m.map.name),
         player_1_id: m.participant1.game_display_id.clone(),
         player_1_name: m.participant1.name.clone(),

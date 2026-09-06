@@ -4,7 +4,8 @@ use k8s_openapi::api::batch::v1::Job;
 pub struct JobTemplateValues {
     pub job_name: String,
     pub configmap_name: String,
-    pub match_id: String,
+    pub match_graph_id: String,
+    pub match_display_id: String,
     pub api_client: String,
     pub api_token: String,
     pub match_controller_image: String,
@@ -23,7 +24,8 @@ pub fn render_job_template(template: &str, values: &JobTemplateValues) -> anyhow
     let rendered = template
         .replace("PLACEHOLDER_JOB_NAME", &values.job_name)
         .replace("PLACEHOLDER_CONFIGMAP_NAME", &values.configmap_name)
-        .replace("PLACEHOLDER_MATCH_ID", &values.match_id)
+        .replace("PLACEHOLDER_MATCH_DISPLAY_ID", &values.match_display_id)
+        .replace("PLACEHOLDER_MATCH_GRAPH_ID", &values.match_graph_id)
         .replace("PLACEHOLDER_API_CLIENT", &values.api_client)
         .replace("PLACEHOLDER_API_TOKEN", &values.api_token)
         .replace("PLACEHOLDER_MATCH_CONTROLLER", &values.match_controller_image)
